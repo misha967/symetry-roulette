@@ -602,7 +602,11 @@ function spinWheel(winNumber, onDone) {
   const ballTurns     = Math.PI * 2 * (9 + Math.random() * 4); // positive = counter-clockwise
   const ballDuration  = duration * 0.78;
 
-  // Track ball angle continuously — no snap at end
+  // The final ball angle must align with the winning slot center on the wheel.
+  // Slot i center on the wheel is at: finalWheelAngle - PI/2 + (winIdx + 0.5) * slice
+  const finalBallA = finalWheelAngle - Math.PI / 2 + (winIdx + 0.5) * slice;
+
+  // Track ball angle continuously
   let curBallA = ballStartA;
   let curBallR = ballStartR;
 
@@ -615,11 +619,22 @@ function spinWheel(winNumber, onDone) {
     const tBall   = Math.min(elapsed / ballDuration, 1);
 
     const tWheel  = easeOutCubic(t);
-    const tBallE  = easeOutSine(tBall); // sine ease — smooth stop, no bounce
+    const tBallE  = easeOutSine(tBall);
 
     const curWheelA = startWheelAngle + totalAngle * tWheel;
-    curBallA  = ballStartA + ballTurns * tBallE;  // positive = counter-clockwise
-    curBallR  = ballStartR - (ballStartR - ballEndR) * tBallE;
+
+    if (tBall < 1) {
+      // Ball freely spins during animation
+      curBallA  = ballStartA + ballTurns * tBallE;
+      curBallR  = ballStartR - (ballStartR - ballEndR) * tBallE;
+    } else {
+      // Ball has stopped — compute its angle based on current wheel angle
+      // so it stays locked in the winning slot as the wheel decelerates
+      const wheelProgress = tWheel; // 0→1
+      const currentWheelOffset = totalAngle * wheelProgress - totalAngle; // relative shift since ball stopped
+      curBallA = finalBallA + (curWheelA - finalWheelAngle); // track wheel rotation
+      curBallR = ballEndR;
+    }
 
     drawWheel(curWheelA, null);
     drawBall(curBallA, curBallR);
@@ -628,9 +643,9 @@ function spinWheel(winNumber, onDone) {
       requestAnimationFrame(frame);
     } else {
       wheelAngle = finalWheelAngle;
-      // Draw final frame — ball stays exactly where it stopped, no snap
+      // Draw final frame with ball locked in winning slot
       drawWheel(finalWheelAngle, winNumber);
-      drawBall(curBallA, curBallR); // same angle it was at, no teleport
+      drawBall(finalBallA, ballEndR);
       playWinSound();
       setTimeout(onDone, 700);
     }
