@@ -583,63 +583,54 @@ function angleToSlot(angle) {
 
 function spinWheel(winNumber, onDone) {
   const slice = (Math.PI * 2) / 37;
-
-  // Target: wheel angle where winNumber is at the indicator
   const winIdx = RM.WHEEL_ORDER.indexOf(winNumber);
-  // Slot center angle (absolute): -(-winIdx*slice - slice/2) = winIdx*slice + slice/2
-  // We want: -(wheelFinal - PI/2) mod 2PI = winIdx*slice + slice/2
-  // => wheelFinal = -(winIdx*slice + slice/2) - PI/2 + 2PI*k
 
-  const targetBase = -(winIdx * slice + slice / 2) - Math.PI / 2;
-  // Add enough full rotations (5-8) so spin is long
-  const extraTurns = Math.PI * 2 * (5 + Math.floor(Math.random() * 4));
+  // Wheel rotates clockwise → totalAngle is negative
+  const targetBase     = -(winIdx * slice + slice / 2) - Math.PI / 2;
+  const extraTurns     = Math.PI * 2 * (5 + Math.floor(Math.random() * 4));
   const finalWheelAngle = targetBase - extraTurns;
+  const totalAngle     = finalWheelAngle - wheelAngle; // negative (clockwise)
+  const duration       = 5000 + Math.random() * 1000;
+  const start          = performance.now();
+  const startWheelAngle = wheelAngle;
 
-  // Physics: start fast, decelerate to stop
-  const totalAngle = finalWheelAngle - wheelAngle; // negative = clockwise
-  const duration   = 5000 + Math.random() * 1000;  // 5-6s
-  const start      = performance.now();
-  const startAngle = wheelAngle;
+  // Ball goes COUNTER to wheel (positive direction = counter-clockwise)
+  const ballStartR    = wheelR * 0.93;
+  const ballEndR      = wheelR * 0.68;
+  const ballStartA    = Math.random() * Math.PI * 2;
+  // Ball spins in OPPOSITE direction to wheel (totalAngle is negative, so ball is positive)
+  const ballTurns     = Math.PI * 2 * (9 + Math.random() * 4); // positive = counter-clockwise
+  const ballDuration  = duration * 0.78;
 
-  // Ball physics
-  const ballStartR   = wheelR * 0.93;
-  const ballEndR     = wheelR * 0.66;
-  const ballStartA   = Math.random() * Math.PI * 2;
-  // Ball counter-rotates, stops earlier than wheel
-  const ballTurns    = Math.PI * 2 * (10 + Math.random() * 5);
-  const ballDuration = duration * 0.75; // ball stops at 75% of spin time
+  // Track ball angle continuously — no snap at end
+  let curBallA = ballStartA;
+  let curBallR = ballStartR;
 
-  // Ease: smooth deceleration (ease-out cubic for wheel, faster ease-out for ball)
   function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-  function easeOutQuad(t)  { return 1 - Math.pow(1 - t, 2); }
-
-  let lastT = 0;
+  function easeOutSine(t)  { return Math.sin(t * Math.PI / 2); }
 
   function frame(now) {
-    const elapsed  = now - start;
-    const t        = Math.min(elapsed / duration, 1);
-    const tWheel   = easeOutCubic(t);
-    const tBall    = easeOutQuad(Math.min(elapsed / ballDuration, 1));
+    const elapsed = now - start;
+    const t       = Math.min(elapsed / duration, 1);
+    const tBall   = Math.min(elapsed / ballDuration, 1);
 
-    const curWheelA = startAngle + totalAngle * tWheel;
-    const curBallA  = ballStartA - ballTurns * tBall;
-    const curBallR  = ballStartR - (ballStartR - ballEndR) * tBall;
+    const tWheel  = easeOutCubic(t);
+    const tBallE  = easeOutSine(tBall); // sine ease — smooth stop, no bounce
 
-    drawWheel(curWheelA, null); // never highlight during spin
+    const curWheelA = startWheelAngle + totalAngle * tWheel;
+    curBallA  = ballStartA + ballTurns * tBallE;  // positive = counter-clockwise
+    curBallR  = ballStartR - (ballStartR - ballEndR) * tBallE;
+
+    drawWheel(curWheelA, null);
     drawBall(curBallA, curBallR);
 
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
-      // Snap to exact final angle
       wheelAngle = finalWheelAngle;
-
-      // Ball lands in the winning slot's visual center
-      const winSlotCenterA = finalWheelAngle - Math.PI / 2 + winIdx * slice + slice / 2;
-
+      // Draw final frame — ball stays exactly where it stopped, no snap
       drawWheel(finalWheelAngle, winNumber);
-      drawBall(winSlotCenterA, ballEndR);
-
+      drawBall(curBallA, curBallR); // same angle it was at, no teleport
       playWinSound();
       setTimeout(onDone, 700);
     }
