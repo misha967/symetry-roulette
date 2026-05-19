@@ -234,10 +234,19 @@
       // Wheel: perfectly linear
       const curWheelA = startWheelAngle + totalWheelAngle * t;
 
-      // Ball: easeOutQuad — fast then slow
-      const tBallE  = 1 - (1 - tBall) * (1 - tBall);
-      const curBallA = ballStartA + ballTotalTravel * tBallE;
-      const curBallR = ballStartR - (ballStartR - ballEndR) * tBallE;
+      let curBallA, curBallR;
+
+      if (tBall < 1) {
+        // Ball still spinning — easeOutQuad
+        const tBallE = 1 - (1 - tBall) * (1 - tBall);
+        curBallA = ballStartA + ballTotalTravel * tBallE;
+        curBallR = ballStartR - (ballStartR - ballEndR) * tBallE;
+      } else {
+        // Ball has landed — lock it into the winning slot and rotate with the wheel
+        const wheelDelta = curWheelA - finalWheelAngle;
+        curBallA = finalBallA + wheelDelta;
+        curBallR = ballEndR;
+      }
 
       drawWheel(curWheelA, null);
       drawBall(curBallA, curBallR);
