@@ -428,63 +428,113 @@ function drawWheel(angle, winNumber) {
   const cx    = size / 2;
   const cy    = size / 2;
   const r     = wheelR;
-  const n     = 37;
-  const slice = (Math.PI * 2) / n;
+  const slice = (Math.PI * 2) / 37;
 
   wCtx.clearRect(0, 0, size, size);
 
-  // Outer ring
+  // Wood outer ring
   wCtx.beginPath();
-  wCtx.arc(cx, cy, r + 3, 0, Math.PI * 2);
-  wCtx.fillStyle = '#1a1a1a';
+  wCtx.arc(cx, cy, r + 8, 0, Math.PI * 2);
+  const woodGrad = wCtx.createRadialGradient(cx, cy, r * 0.9, cx, cy, r + 8);
+  woodGrad.addColorStop(0, '#3a1f08');
+  woodGrad.addColorStop(1, '#1a0800');
+  wCtx.fillStyle = woodGrad;
   wCtx.fill();
-  wCtx.strokeStyle = '#333';
-  wCtx.lineWidth = 1;
+
+  // Metal ring border
+  wCtx.beginPath();
+  wCtx.arc(cx, cy, r + 1, 0, Math.PI * 2);
+  wCtx.strokeStyle = '#666';
+  wCtx.lineWidth = 2;
   wCtx.stroke();
 
-  // Slices
-  // Slices — draw clockwise matching real wheel
+  // Slices — clockwise
   RM.WHEEL_ORDER.forEach((num, i) => {
-    const startA = angle + i * slice - Math.PI / 2;
+    const startA = angle - Math.PI / 2 + i * slice;
     const endA   = startA + slice;
+    const isWin  = num === winNumber;
 
     wCtx.beginPath();
     wCtx.moveTo(cx, cy);
     wCtx.arc(cx, cy, r, startA, endA);
     wCtx.closePath();
-    const isWin = num === winNumber;
-    wCtx.fillStyle = isWin ? '#ffffff' : numberColor(num);
+    wCtx.fillStyle = isWin ? '#f0f0f0' : numberColor(num);
     wCtx.fill();
-    wCtx.strokeStyle = '#000';
-    wCtx.lineWidth = 0.5;
+    wCtx.strokeStyle = '#111';
+    wCtx.lineWidth = 0.8;
     wCtx.stroke();
 
-    // Number — closer to outer edge (0.82 instead of 0.72)
+    // Number at 83% radius
     const midA = startA + slice / 2;
-    const tx   = cx + (r * 0.82) * Math.cos(midA);
-    const ty   = cy + (r * 0.82) * Math.sin(midA);
+    const tx = cx + r * 0.83 * Math.cos(midA);
+    const ty = cy + r * 0.83 * Math.sin(midA);
     wCtx.save();
     wCtx.translate(tx, ty);
     wCtx.rotate(midA + Math.PI / 2);
-    wCtx.fillStyle = isWin ? '#000' : '#ffffff';
-    wCtx.font = `bold ${Math.max(6, r * 0.085)}px 'Space Mono', monospace`;
-    wCtx.textAlign    = 'center';
+    wCtx.font = `bold ${Math.max(6, r * 0.082)}px 'Space Mono', monospace`;
+    wCtx.textAlign = 'center';
     wCtx.textBaseline = 'middle';
+    wCtx.fillStyle = isWin ? '#000' : '#fff';
     wCtx.fillText(String(num), 0, 0);
     wCtx.restore();
   });
 
-  // Center hub
-  const hubGrad = wCtx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.18);
-  hubGrad.addColorStop(0, '#444');
-  hubGrad.addColorStop(1, '#111');
+  // Inner bowl
   wCtx.beginPath();
-  wCtx.arc(cx, cy, r * 0.18, 0, Math.PI * 2);
-  wCtx.fillStyle = hubGrad;
+  wCtx.arc(cx, cy, r * 0.54, 0, Math.PI * 2);
+  const bowlGrad = wCtx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.54);
+  bowlGrad.addColorStop(0, '#3a2010');
+  bowlGrad.addColorStop(1, '#1a0800');
+  wCtx.fillStyle = bowlGrad;
   wCtx.fill();
   wCtx.strokeStyle = '#555';
   wCtx.lineWidth = 1;
   wCtx.stroke();
+
+  // Spokes
+  for (let s = 0; s < 8; s++) {
+    const sa = angle + s * (Math.PI / 4);
+    wCtx.beginPath();
+    wCtx.moveTo(cx + r * 0.55 * Math.cos(sa), cy + r * 0.55 * Math.sin(sa));
+    wCtx.lineTo(cx + r * 0.22 * Math.cos(sa), cy + r * 0.22 * Math.sin(sa));
+    wCtx.strokeStyle = '#4a2a10';
+    wCtx.lineWidth = 2;
+    wCtx.stroke();
+  }
+
+  // Center hub
+  const hubGrad = wCtx.createRadialGradient(cx - r*0.03, cy - r*0.03, 0, cx, cy, r * 0.18);
+  hubGrad.addColorStop(0, '#aaa');
+  hubGrad.addColorStop(0.5, '#555');
+  hubGrad.addColorStop(1, '#222');
+  wCtx.beginPath();
+  wCtx.arc(cx, cy, r * 0.18, 0, Math.PI * 2);
+  wCtx.fillStyle = hubGrad;
+  wCtx.fill();
+  wCtx.strokeStyle = '#777';
+  wCtx.lineWidth = 1;
+  wCtx.stroke();
+
+  // Gold center button
+  const goldGrad = wCtx.createRadialGradient(cx - r*0.02, cy - r*0.03, 0, cx, cy, r * 0.07);
+  goldGrad.addColorStop(0, '#ffe066');
+  goldGrad.addColorStop(1, '#b8860b');
+  wCtx.beginPath();
+  wCtx.arc(cx, cy, r * 0.07, 0, Math.PI * 2);
+  wCtx.fillStyle = goldGrad;
+  wCtx.fill();
+
+  // Fixed indicator triangle at top (12 o'clock) — does NOT rotate with wheel
+  wCtx.save();
+  wCtx.translate(cx, cy - r + 2);
+  wCtx.beginPath();
+  wCtx.moveTo(0, -8);
+  wCtx.lineTo(-5, 0);
+  wCtx.lineTo(5, 0);
+  wCtx.closePath();
+  wCtx.fillStyle = '#ffffff';
+  wCtx.fill();
+  wCtx.restore();
 }
 
 function drawBall(bAngle, bRadius) {
@@ -517,49 +567,53 @@ function drawBall(bAngle, bRadius) {
 function spinWheel(winNumber, onDone) {
   const totalDuration = 5000;
   const start = performance.now();
+  const slice = (Math.PI * 2) / 37;
 
-  const winIdx   = RM.WHEEL_ORDER.indexOf(winNumber);
-  const slice    = (Math.PI * 2) / 37;
+  // Winning slot index in WHEEL_ORDER
+  const winIdx = RM.WHEEL_ORDER.indexOf(winNumber);
 
-  // How much the wheel rotates total (lots of full turns + land on winner)
-  const fullRots     = (Math.PI * 2) * (5 + Math.floor(Math.random() * 3));
-  const targetOffset = -(winIdx * slice) + slice / 2; // winner at 12 o'clock
-  const wheelDelta   = fullRots + targetOffset - (wheelAngle % (Math.PI * 2));
-  const finalWheelAngle = wheelAngle + wheelDelta;
+  // We want winning number to stop at 12 o'clock (indicator position = -PI/2 + angle)
+  // Slot midpoint at top: angle - PI/2 + winIdx*slice + slice/2 = -PI/2
+  // => angle = -winIdx*slice - slice/2
+  const targetWheelAngle = -winIdx * slice - slice / 2;
 
-  // Ball: starts at outer track, counter-rotates, spirals inward
-  const ballStartRadius = wheelR * 0.92;
-  const ballEndRadius   = wheelR * 0.65;
+  // Add full rotations so it spins visibly
+  const extraTurns = (Math.PI * 2) * (5 + Math.floor(Math.random() * 3));
+  const finalWheelAngle = targetWheelAngle - extraTurns;
+
+  // Ball starts at outer track (r * 0.93), counter-clockwise
+  const ballStartRadius = wheelR * 0.93;
+  const ballEndRadius   = wheelR * 0.66;
   const ballStartAngle  = Math.random() * Math.PI * 2;
-  // Ball spins in opposite direction (counter-clockwise)
-  const ballSpinTotal   = -(Math.PI * 2) * (10 + Math.random() * 5);
+  const ballTotalSpin   = -(Math.PI * 2) * (12 + Math.random() * 4); // counter-clockwise
 
-  function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
-  // Ball slows down faster than wheel (it's lighter)
-  function easeOutBall(t)  { return 1 - Math.pow(1 - t, 2.5); }
+  // Ball final angle = top of wheel = -PI/2 (12 o'clock) + small offset within slot
+  const ballFinalAngle = ballStartAngle + ballTotalSpin;
+
+  function easeOut(t, p) { return 1 - Math.pow(1 - t, p); }
 
   function frame(now) {
     const elapsed = Math.min(now - start, totalDuration);
-    const t       = elapsed / totalDuration;
+    const t = elapsed / totalDuration;
 
-    const tWheel = easeOutQuart(t);
-    const tBall  = easeOutBall(Math.min(t * 1.2, 1)); // ball slows faster
+    const tW = easeOut(t, 4);       // wheel: smooth quartic
+    const tB = easeOut(Math.min(t * 1.3, 1), 2.5); // ball stops earlier
 
-    const curWheelAngle = wheelAngle + wheelDelta * tWheel;
-    // Ball angle is absolute (not relative to wheel)
-    const curBallAngle  = ballStartAngle + ballSpinTotal * tBall;
-    // Spiral inward as it slows
-    const curBallRadius = ballStartRadius - (ballStartRadius - ballEndRadius) * tBall;
+    const curWheel  = wheelAngle + (finalWheelAngle - wheelAngle) * tW;
+    const curBallA  = ballStartAngle + (ballFinalAngle - ballStartAngle) * tB;
+    const curBallR  = ballStartRadius - (ballStartRadius - ballEndRadius) * tB;
 
-    drawWheel(curWheelAngle, t >= 1 ? winNumber : null);
-    drawBall(curBallAngle, curBallRadius);
+    drawWheel(curWheel, t >= 1 ? winNumber : null);
+    drawBall(curBallA, curBallR);
 
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
       wheelAngle = finalWheelAngle;
+      // Draw ball exactly at winning slot midpoint angle (relative to wheel + indicator)
+      const winSlotAngle = finalWheelAngle - Math.PI / 2 + winIdx * slice + slice / 2;
       drawWheel(finalWheelAngle, winNumber);
-      drawBall(curBallAngle, ballEndRadius);
+      drawBall(winSlotAngle, ballEndRadius);
       playWinSound();
       setTimeout(onDone, 700);
     }
@@ -713,7 +767,15 @@ function rebet() {
 // SPIN LOGIC
 // ═══════════════════════════════════════════════════════
 function doSpin() {
-  if (spinning || bets.length === 0) return;
+  if (spinning) return;
+
+  if (bets.length === 0) {
+    const msg = document.getElementById('win-message');
+    msg.textContent = '⚠️ Placez votre mise d\'abord';
+    msg.className = 'lost';
+    setTimeout(() => { msg.textContent = 'Placez vos mises'; msg.className = ''; }, 2500);
+    return;
+  }
 
   const total = bets.reduce((s,b) => s + b.amount, 0);
   if (total > balance) {
@@ -763,9 +825,9 @@ function doSpin() {
     if (anyWon) {
       msgEl.textContent = `Numéro ${winNumber} — Gagné !`;
       msgEl.className = 'won';
-      netEl.textContent = `+${totalNet.toFixed(0)}$`;
+      netEl.textContent = `+${(totalNet - total).toFixed(0)}$`;
       netEl.className = 'pos';
-      if (totalNet >= 100) showBigWin(winNumber, totalNet);
+      showWinPopup(winNumber, totalNet, total);
     } else {
       msgEl.textContent = `Numéro ${winNumber} — Perdu`;
       msgEl.className = 'lost';
@@ -790,30 +852,52 @@ function highlightWinning(num) {
   });
 }
 
-function showBigWin(num, amount) {
-  const existing = document.getElementById('bigwin-popup');
+function showWinPopup(winNumber, totalWin, betsTotal) {
+  const existing = document.getElementById('win-popup');
   if (existing) existing.remove();
+
+  const profit = totalWin - betsTotal;
+  const info   = RM.numberInfo(winNumber);
+  const bgColor = info.color === 'green' ? '#1a6b3a' : info.color === 'red' ? '#8b1a1a' : '#1a1a1a';
+  const isJackpot = profit >= betsTotal * 10;
+  const isBig     = profit >= betsTotal * 3;
+
   const popup = document.createElement('div');
-  popup.id = 'bigwin-popup';
+  popup.id = 'win-popup';
   popup.style.cssText = `
-    position:fixed; top:40%; left:50%; transform:translate(-50%,-50%) scale(0.7);
-    opacity:0; transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    position:fixed; top:50%; left:50%;
+    transform:translate(-50%,-50%) scale(0.7);
+    opacity:0; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
     z-index:200; text-align:center; pointer-events:none;
-    background:#111; border:1px solid #444; border-radius:16px;
-    padding:24px 36px; min-width:220px;
-    box-shadow: 0 0 40px rgba(255,255,255,0.08);
+    background:#0e0e0e; border:1px solid #333; border-radius:18px;
+    padding:28px 40px; min-width:240px;
+    box-shadow:0 0 50px rgba(255,255,255,0.06);
   `;
+
   popup.innerHTML = `
-    <div style="font-size:0.6rem;letter-spacing:0.3em;color:#666;text-transform:uppercase;margin-bottom:8px;">✦ Gain</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:600;color:#fff;line-height:1;">${amount.toFixed(0)}$</div>
-    <div style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--silver);margin-top:6px;letter-spacing:0.1em;">Numéro ${num}</div>
+    <div style="font-size:0.55rem;letter-spacing:0.35em;color:#555;text-transform:uppercase;margin-bottom:10px;">
+      ${isJackpot ? '🏆 JACKPOT' : isBig ? '✦ Gain' : '✦ Gagné'}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:${bgColor};border:1px solid #555;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:0.8rem;font-weight:700;color:#fff;">${winNumber}</div>
+    </div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:600;color:#fff;line-height:1;margin-bottom:6px;">+${profit.toFixed(0)}$</div>
+    <div style="font-family:'Space Mono',monospace;font-size:0.65rem;color:#555;letter-spacing:0.1em;">Retour total : ${totalWin.toFixed(0)}$</div>
   `;
+
   document.body.appendChild(popup);
-  setTimeout(() => { popup.style.opacity='1'; popup.style.transform='translate(-50%,-50%) scale(1)'; }, 10);
+  requestAnimationFrame(() => {
+    popup.style.opacity = '1';
+    popup.style.transform = 'translate(-50%,-50%) scale(1)';
+  });
+
+  const delay = isJackpot ? 3500 : isBig ? 2800 : 2200;
   setTimeout(() => {
-    popup.style.opacity='0'; popup.style.transform='translate(-50%,-50%) scale(0.9)';
-    setTimeout(() => popup.remove(), 400);
-  }, 2500);
+    popup.style.transition = 'opacity 0.4s, transform 0.4s';
+    popup.style.opacity = '0';
+    popup.style.transform = 'translate(-50%,-50%) scale(0.9)';
+    setTimeout(() => popup.remove(), 450);
+  }, delay);
 }
 
 // ═══════════════════════════════════════════════════════
