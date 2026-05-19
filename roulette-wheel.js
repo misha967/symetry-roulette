@@ -202,7 +202,7 @@
     wheelAngle = ((wheelAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
 
     const WHEEL_TURNS = 8;                              // always exactly 8 turns
-    const DURATION    = 6000;                           // ms — fixed, always same speed
+    const DURATION    = 9000;                           // ms — fixed, always same speed
     const targetBase      = -(winIdx * slice + slice / 2) - Math.PI / 2;
     // Bring targetBase into same range then subtract full turns for CW motion
     const finalWheelAngle = targetBase - Math.PI * 2 * WHEEL_TURNS;
