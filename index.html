@@ -101,21 +101,22 @@
     /* TABLE SECTION */
     .table-section {
       flex:1; overflow-y:auto; overflow-x:hidden;
-      padding:8px 10px; background:var(--bg);
-      display:flex; flex-direction:column; gap:6px;
+      padding:10px 8px; background:var(--bg);
+      display:flex; flex-direction:column; gap:5px;
       scrollbar-width:none;
+      align-items:stretch;
     }
     .table-section::-webkit-scrollbar { display:none; }
 
     /* Roulette grid */
-    .roulette-grid { display:flex; flex-direction:column; gap:3px; }
+    .roulette-grid { display:flex; flex-direction:column; gap:3px; width:100%; }
 
     /* Zero row */
     .zero-row { display:flex; gap:3px; }
     .zero-cell {
-      flex:1; height:36px; border-radius:6px;
+      flex:1; height:40px; border-radius:6px;
       display:flex; align-items:center; justify-content:center;
-      font-family:var(--font-mono); font-size:0.8rem; font-weight:700;
+      font-family:var(--font-mono); font-size:0.9rem; font-weight:700;
       cursor:pointer; background:var(--green); color:#fff;
       transition:all 0.15s; position:relative; user-select:none;
     }
@@ -123,15 +124,15 @@
     .zero-cell.selected { outline:2px solid #fff; outline-offset:1px; }
 
     /* Number grid: 3 rows x 12 cols */
-    .number-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:3px; }
+    .number-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:3px; width:100%; }
     .num-cell {
-      height:36px; border-radius:5px;
+      height:40px; border-radius:5px;
       display:flex; align-items:center; justify-content:center;
-      font-family:var(--font-mono); font-size:0.7rem; font-weight:700;
+      font-family:var(--font-mono); font-size:0.72rem; font-weight:700;
       cursor:pointer; transition:all 0.12s; position:relative; user-select:none;
     }
     .num-cell.red-num   { background:var(--red); color:#fff; }
-    .num-cell.black-num { background:#1a1a1a; color:var(--silver); border:1px solid #333; }
+    .num-cell.black-num { background:#1e1e1e; color:var(--silver); border:1px solid #333; }
     .num-cell:active { transform:scale(0.93); }
     .num-cell.selected { outline:2px solid #fff; outline-offset:1px; }
     .num-cell.winning  { animation:winPulse 0.8s ease 3; }
@@ -143,32 +144,32 @@
     /* Outside bets row */
     .outside-row { display:flex; gap:3px; }
     .outside-cell {
-      flex:1; height:32px; border-radius:6px;
+      flex:1; height:34px; border-radius:6px;
       display:flex; align-items:center; justify-content:center;
-      font-family:var(--font-mono); font-size:0.62rem; font-weight:700;
-      cursor:pointer; background:var(--surface2); color:var(--dim);
+      font-family:var(--font-mono); font-size:0.64rem; font-weight:700;
+      cursor:pointer; background:var(--surface2); color:var(--silver);
       border:1px solid var(--border); transition:all 0.12s; user-select:none;
-      letter-spacing:0.03em; white-space:nowrap;
+      letter-spacing:0.02em; white-space:nowrap; padding:0 2px;
     }
     .outside-cell:active { transform:scale(0.96); }
-    .outside-cell.selected { background:var(--border); color:#fff; border-color:#555; }
-    .outside-cell.red-cell   { background:#2a0a0a; color:var(--red-lit); border-color:#5a1a1a; }
-    .outside-cell.red-cell.selected  { background:var(--red); color:#fff; border-color:var(--red-lit); }
-    .outside-cell.black-cell { background:#1a1a1a; color:var(--silver); }
+    .outside-cell.selected { background:var(--border); color:#fff; border-color:#666; }
+    .outside-cell.red-cell   { background:#2a0a0a; color:#e74c3c; border-color:#5a1a1a; }
+    .outside-cell.red-cell.selected  { background:var(--red); color:#fff; border-color:#e74c3c; }
+    .outside-cell.black-cell { background:#111; color:var(--silver); border-color:#333; }
     .outside-cell.black-cell.selected { background:#333; color:#fff; border-color:#666; }
 
-    /* Column bets - right side */
+    /* Column bets */
     .grid-with-columns { display:flex; gap:3px; }
-    .column-bets { display:flex; flex-direction:column; gap:3px; width:36px; flex-shrink:0; }
+    .column-bets { display:flex; flex-direction:column; gap:3px; width:38px; flex-shrink:0; }
     .col-cell {
-      flex:1; border-radius:6px;
+      flex:1; border-radius:6px; text-align:center; line-height:1.2;
       display:flex; align-items:center; justify-content:center;
       font-family:var(--font-mono); font-size:0.58rem; font-weight:700;
-      cursor:pointer; background:var(--surface2); color:var(--dim);
+      cursor:pointer; background:var(--surface2); color:var(--silver);
       border:1px solid var(--border); transition:all 0.12s; user-select:none;
     }
     .col-cell:active { transform:scale(0.96); }
-    .col-cell.selected { background:var(--border); color:#fff; border-color:#555; }
+    .col-cell.selected { background:var(--border); color:#fff; border-color:#666; }
 
     /* Chip indicator on cell */
     .chip-dot {
@@ -218,8 +219,10 @@
       .controls { padding:8px 10px; gap:6px; }
       .chip-btn { padding:5px 8px; font-size:0.62rem; }
       #spin-btn { font-size:1rem; padding:12px; }
-      .num-cell { height:32px; font-size:0.65rem; }
-      .outside-cell { height:28px; font-size:0.58rem; }
+      .num-cell { height:36px; font-size:0.68rem; }
+      .zero-cell { height:36px; }
+      .outside-cell { height:32px; font-size:0.6rem; }
+      .col-cell { font-size:0.55rem; }
     }
     ::-webkit-scrollbar { display:none; }
   </style>
@@ -440,11 +443,11 @@ function drawWheel(angle, winNumber) {
   wCtx.stroke();
 
   // Slices
+  // Slices — draw clockwise matching real wheel
   RM.WHEEL_ORDER.forEach((num, i) => {
     const startA = angle + i * slice - Math.PI / 2;
     const endA   = startA + slice;
 
-    // Slice
     wCtx.beginPath();
     wCtx.moveTo(cx, cy);
     wCtx.arc(cx, cy, r, startA, endA);
@@ -456,16 +459,16 @@ function drawWheel(angle, winNumber) {
     wCtx.lineWidth = 0.5;
     wCtx.stroke();
 
-    // Number text
+    // Number — closer to outer edge (0.82 instead of 0.72)
     const midA = startA + slice / 2;
-    const tx   = cx + (r * 0.72) * Math.cos(midA);
-    const ty   = cy + (r * 0.72) * Math.sin(midA);
+    const tx   = cx + (r * 0.82) * Math.cos(midA);
+    const ty   = cy + (r * 0.82) * Math.sin(midA);
     wCtx.save();
     wCtx.translate(tx, ty);
     wCtx.rotate(midA + Math.PI / 2);
     wCtx.fillStyle = isWin ? '#000' : '#ffffff';
-    wCtx.font = `bold ${Math.max(7, r * 0.095)}px 'Space Mono', monospace`;
-    wCtx.textAlign   = 'center';
+    wCtx.font = `bold ${Math.max(6, r * 0.085)}px 'Space Mono', monospace`;
+    wCtx.textAlign    = 'center';
     wCtx.textBaseline = 'middle';
     wCtx.fillText(String(num), 0, 0);
     wCtx.restore();
@@ -512,46 +515,53 @@ function drawBall(bAngle, bRadius) {
 // SPIN ANIMATION
 // ═══════════════════════════════════════════════════════
 function spinWheel(winNumber, onDone) {
-  const totalDuration = 4000; // ms
+  const totalDuration = 5000;
   const start = performance.now();
 
-  // Find angle where winNumber lands at top (12 o'clock)
-  const winIdx = RM.WHEEL_ORDER.indexOf(winNumber);
-  const slice  = (Math.PI * 2) / 37;
-  // Target wheel angle so winNumber slice sits at top
-  const targetAngle = -(winIdx * slice) - Math.PI / 2 + slice / 2;
-  // Add full rotations for drama
-  const fullRots = (Math.PI * 2) * (5 + Math.floor(Math.random() * 3));
-  const finalAngle = targetAngle - fullRots;
+  const winIdx   = RM.WHEEL_ORDER.indexOf(winNumber);
+  const slice    = (Math.PI * 2) / 37;
 
-  // Ball starts at outer edge, spirals inward
-  const ballStartRadius = wheelR * 0.88;
-  const ballEndRadius   = wheelR * 0.62;
+  // How much the wheel rotates total (lots of full turns + land on winner)
+  const fullRots     = (Math.PI * 2) * (5 + Math.floor(Math.random() * 3));
+  const targetOffset = -(winIdx * slice) + slice / 2; // winner at 12 o'clock
+  const wheelDelta   = fullRots + targetOffset - (wheelAngle % (Math.PI * 2));
+  const finalWheelAngle = wheelAngle + wheelDelta;
+
+  // Ball: starts at outer track, counter-rotates, spirals inward
+  const ballStartRadius = wheelR * 0.92;
+  const ballEndRadius   = wheelR * 0.65;
   const ballStartAngle  = Math.random() * Math.PI * 2;
-  // Ball counter-rotates faster at start, slows to match wheel
-  const ballSpins = (Math.PI * 2) * (8 + Math.random() * 4);
+  // Ball spins in opposite direction (counter-clockwise)
+  const ballSpinTotal   = -(Math.PI * 2) * (10 + Math.random() * 5);
+
+  function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
+  // Ball slows down faster than wheel (it's lighter)
+  function easeOutBall(t)  { return 1 - Math.pow(1 - t, 2.5); }
 
   function frame(now) {
-    const elapsed = now - start;
-    const t = Math.min(elapsed / totalDuration, 1);
-    // Ease out cubic
-    const ease = 1 - Math.pow(1 - t, 3);
+    const elapsed = Math.min(now - start, totalDuration);
+    const t       = elapsed / totalDuration;
 
-    const curWheelAngle = wheelAngle + (finalAngle - wheelAngle) * ease;
-    const curBallAngle  = ballStartAngle - ballSpins * ease;
-    const curBallRadius = ballStartRadius - (ballStartRadius - ballEndRadius) * ease;
+    const tWheel = easeOutQuart(t);
+    const tBall  = easeOutBall(Math.min(t * 1.2, 1)); // ball slows faster
 
-    drawWheel(curWheelAngle, t === 1 ? winNumber : null);
+    const curWheelAngle = wheelAngle + wheelDelta * tWheel;
+    // Ball angle is absolute (not relative to wheel)
+    const curBallAngle  = ballStartAngle + ballSpinTotal * tBall;
+    // Spiral inward as it slows
+    const curBallRadius = ballStartRadius - (ballStartRadius - ballEndRadius) * tBall;
+
+    drawWheel(curWheelAngle, t >= 1 ? winNumber : null);
     drawBall(curBallAngle, curBallRadius);
 
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
-      wheelAngle = finalAngle % (Math.PI * 2);
-      drawWheel(curWheelAngle, winNumber);
-      drawBall(curBallAngle, curBallRadius);
+      wheelAngle = finalWheelAngle;
+      drawWheel(finalWheelAngle, winNumber);
+      drawBall(curBallAngle, ballEndRadius);
       playWinSound();
-      setTimeout(onDone, 600);
+      setTimeout(onDone, 700);
     }
   }
 
