@@ -188,59 +188,54 @@
     ctx.fill();
   }
 
-  // ─── EASING ───────────────────────────────────────────
-  // Wheel: perfectly linear — constant rhythm throughout
-  function linearWheel(t) { return t; }
-  // Ball: starts fast, decelerates into slot (easeOutQuint)
-  function easeOutBall(t) { return 1 - Math.pow(1 - t, 5); }
-
   // ─── SPIN ANIMATION ───────────────────────────────────
   /**
-   * Wheel turns at perfectly constant speed (linear).
-   * Ball starts fast counter-clockwise and decelerates smoothly
-   * into the winning slot — no snap, no teleport.
+   * Wheel: constant angular velocity (linear), always 8 turns at 1 turn/s.
+   * Ball: easeOutQuad — fast start, smooth deceleration. No snap, no teleport.
    */
   function spinWheel(winNumber, onDone, playSoundFn) {
     const slice  = (Math.PI * 2) / 37;
     const winIdx = RM.WHEEL_ORDER.indexOf(winNumber);
 
-    // ── Wheel target ──
-    // Speed = 1 turn/s → duration derived from distance, always same velocity
-    const WHEEL_SPEED     = (Math.PI * 2) / 1000;   // radians per ms
-    const targetBase      = -(winIdx * slice + slice / 2) - Math.PI / 2;
-    const extraWheelTurns = Math.PI * 2 * 8;
-    const finalWheelAngle = targetBase - extraWheelTurns;
-    const totalWheelAngle = finalWheelAngle - wheelAngle;
+    // ── Wheel ──
+    // Normalise wheelAngle to [0, 2π) so accumulated rotations don't skew duration
+    wheelAngle = ((wheelAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
 
-    const duration        = Math.abs(totalWheelAngle) / WHEEL_SPEED;
+    const WHEEL_TURNS = 8;                              // always exactly 8 turns
+    const DURATION    = 6000;                           // ms — fixed, always same speed
+    const targetBase      = -(winIdx * slice + slice / 2) - Math.PI / 2;
+    // Bring targetBase into same range then subtract full turns for CW motion
+    const finalWheelAngle = targetBase - Math.PI * 2 * WHEEL_TURNS;
+    // totalWheelAngle = fixed distance, independent of previous wheelAngle
+    const totalWheelAngle = -(Math.PI * 2 * WHEEL_TURNS + ((wheelAngle - targetBase) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2));
+
     const start           = performance.now();
     const startWheelAngle = wheelAngle;
 
-    // ── Ball trajectory ──
+    // ── Ball ──
     const finalBallA = finalWheelAngle - Math.PI / 2 + (winIdx + 0.5) * slice;
 
-    const ballStartA   = Math.random() * Math.PI * 2;
-    const ballStartR   = wheelR * 0.93;
-    const ballEndR     = wheelR * 0.68;
-    const ballDuration = duration * 0.78;
+    const ballStartA      = Math.random() * Math.PI * 2;
+    const ballStartR      = wheelR * 0.93;
+    const ballEndR        = wheelR * 0.68;
+    const BALL_DURATION   = DURATION * 0.76;
 
-    // CCW travel landing exactly on finalBallA
-    const MIN_BALL_TURNS  = 7;
-    const rawDelta = ((finalBallA - ballStartA) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+    // CCW travel that arrives exactly at finalBallA
+    const MIN_BALL_TURNS  = 6;
+    const rawDelta        = ((finalBallA - ballStartA) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
     const ballTotalTravel = rawDelta + Math.PI * 2 * (MIN_BALL_TURNS + Math.floor(Math.random() * 3));
 
     // ── Animation loop ──
     function frame(now) {
       const elapsed = now - start;
-      const t       = Math.min(elapsed / duration, 1);
-      const tBall   = Math.min(elapsed / ballDuration, 1);
+      const t       = Math.min(elapsed / DURATION, 1);
+      const tBall   = Math.min(elapsed / BALL_DURATION, 1);
 
-      const tWheelE = linearWheel(t);
-      const tBallE  = easeOutBall(tBall);
+      // Wheel: perfectly linear
+      const curWheelA = startWheelAngle + totalWheelAngle * t;
 
-      const curWheelA = startWheelAngle + totalWheelAngle * tWheelE;
-
-      // Ball angle — purely driven by its own eased travel; no snapping ever.
+      // Ball: easeOutQuad — fast then slow
+      const tBallE  = 1 - (1 - tBall) * (1 - tBall);
       const curBallA = ballStartA + ballTotalTravel * tBallE;
       const curBallR = ballStartR - (ballStartR - ballEndR) * tBallE;
 
@@ -251,7 +246,6 @@
         requestAnimationFrame(frame);
       } else {
         wheelAngle = finalWheelAngle;
-        // Final frame: highlight winning slice, ball exactly on slot centre.
         drawWheel(finalWheelAngle, winNumber);
         drawBall(finalBallA, ballEndR);
         if (typeof playSoundFn === 'function') playSoundFn();
