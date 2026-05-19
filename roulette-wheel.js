@@ -189,23 +189,15 @@
   }
 
   // ─── EASING ───────────────────────────────────────────
-  // Wheel: starts fast, decelerates smoothly (pure ease-out, high power = longer coast)
-  function easeOutWheel(t) { return 1 - Math.pow(1 - t, 4); }
-  // Ball: ease-in-out — starts gently, peaks mid-spin, then decelerates into slot
-  function easeInOutBall(t) {
-    return t < 0.5
-      ? 4 * t * t * t
-      : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  }
+  // Wheel: perfectly linear — constant rhythm throughout
+  function linearWheel(t) { return t; }
+  // Ball: starts fast, decelerates into slot (easeOutQuint)
+  function easeOutBall(t) { return 1 - Math.pow(1 - t, 5); }
 
   // ─── SPIN ANIMATION ───────────────────────────────────
   /**
-   * Spin the wheel to land on winNumber, then call onDone.
-   *
-   * Wheel speed is normalised: fixed number of turns + fixed duration
-   * so the wheel always feels the same speed regardless of winNumber.
-   *
-   * Ball uses ease-in-out so it accelerates from rest, peaks, then glides
+   * Wheel turns at perfectly constant speed (linear).
+   * Ball starts fast counter-clockwise and decelerates smoothly
    * into the winning slot — no snap, no teleport.
    */
   function spinWheel(winNumber, onDone, playSoundFn) {
@@ -213,13 +205,14 @@
     const winIdx = RM.WHEEL_ORDER.indexOf(winNumber);
 
     // ── Wheel target ──
+    // Speed = 1 turn/s → duration derived from distance, always same velocity
+    const WHEEL_SPEED     = (Math.PI * 2) / 1000;   // radians per ms
     const targetBase      = -(winIdx * slice + slice / 2) - Math.PI / 2;
-    // Fixed extra turns → consistent initial speed every spin
-    const extraWheelTurns = Math.PI * 2 * 6;
+    const extraWheelTurns = Math.PI * 2 * 8;
     const finalWheelAngle = targetBase - extraWheelTurns;
     const totalWheelAngle = finalWheelAngle - wheelAngle;
 
-    const duration        = 5500;
+    const duration        = Math.abs(totalWheelAngle) / WHEEL_SPEED;
     const start           = performance.now();
     const startWheelAngle = wheelAngle;
 
@@ -229,13 +222,11 @@
     const ballStartA   = Math.random() * Math.PI * 2;
     const ballStartR   = wheelR * 0.93;
     const ballEndR     = wheelR * 0.68;
-    const ballDuration = duration * 0.75;
+    const ballDuration = duration * 0.78;
 
-    // CCW travel that lands exactly on finalBallA, with enough full turns
-    const MIN_BALL_TURNS = 7;
+    // CCW travel landing exactly on finalBallA
+    const MIN_BALL_TURNS  = 7;
     const rawDelta = ((finalBallA - ballStartA) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-    // rawDelta ∈ [0, 2π) — the shortest CCW arc to finalBallA.
-    // Add enough full turns so we spin visibly.
     const ballTotalTravel = rawDelta + Math.PI * 2 * (MIN_BALL_TURNS + Math.floor(Math.random() * 3));
 
     // ── Animation loop ──
@@ -244,8 +235,8 @@
       const t       = Math.min(elapsed / duration, 1);
       const tBall   = Math.min(elapsed / ballDuration, 1);
 
-      const tWheelE = easeOutWheel(t);
-      const tBallE  = easeInOutBall(tBall);
+      const tWheelE = linearWheel(t);
+      const tBallE  = easeOutBall(tBall);
 
       const curWheelA = startWheelAngle + totalWheelAngle * tWheelE;
 
