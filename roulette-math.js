@@ -14,9 +14,9 @@ const WHEEL_ORDER = [
   22, 18, 29, 7, 28, 12, 35, 3, 26
 ];
 
-// Red numbers
+// Red numbers (European roulette standard)
 const RED_NUMBERS = new Set([
-  1,3,5,7,9,12,14,16,18,21,23,25,27,30,32,34,36
+  1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36
 ]);
 
 function isRed(n)   { return n !== 0 && RED_NUMBERS.has(n); }
