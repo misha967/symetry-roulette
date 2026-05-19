@@ -256,15 +256,17 @@
 </div>
 
 <script src="roulette-config.js"></script>
+<script src="roulette-bets.js"></script>
 <script src="roulette-math.js"></script>
 <script src="roulette-wheel.js"></script>
 <script>
 const RM  = window.RouletteMath;
-const CFG = window.RouletteConfig;
+const CFG  = window.RouletteConfig;
+const BETS = window.RouletteBets;
 
 // ── STATE ──
 let balance      = parseFloat(localStorage.getItem('symetry_roulette_balance') || '1000');
-let chipValue    = CFG.chips[0];
+let chipValue    = BETS.chipsFor('USD')[0];
 let bets         = [];
 let lastBets     = [];
 let spinning     = false;
@@ -350,7 +352,7 @@ function buildMenu() {
 function openMenu()  { document.getElementById('menu-overlay').classList.add('open'); document.getElementById('menu-drawer').classList.add('open'); }
 function closeMenu() { document.getElementById('menu-overlay').classList.remove('open'); document.getElementById('menu-drawer').classList.remove('open'); }
 function setLanguage(code) { currentLang = code; localStorage.setItem('symetry_lang', code); applyTranslations(); }
-function setCurrency(code) { currentCurrency = code; localStorage.setItem('symetry_currency', code); rebuildChipLabels(); applyTranslations(); }
+function setCurrency(code) { currentCurrency = code; localStorage.setItem('symetry_currency', code); buildChips(); applyTranslations(); }
 
 // ── WHEEL ──
 function initWheel() { RouletteWheel.init(document.getElementById('wheel-canvas'), document.getElementById('wheel-section')); }
@@ -360,19 +362,31 @@ function spinWheel(winNumber, onDone) { RouletteWheel.spin(winNumber, onDone, pl
 function buildChips() {
   const sel = document.getElementById('chip-selector');
   sel.innerHTML = '';
-  CFG.chips.forEach((val, i) => {
+  const cur = getCurrency();
+  const chips = BETS.chipsWithLabel(cur.code, cur.symbol);
+  chips.forEach((chip, i) => {
     const btn = document.createElement('button');
     btn.className = 'chip-btn' + (i === 0 ? ' active' : '');
-    btn.dataset.value = val;
-    btn.textContent = val + ' ' + getCurrency().symbol;
-    btn.onclick = () => selectChip(val);
+    btn.dataset.value = chip.converted;
+    btn.dataset.eur = chip.eur;
+    btn.textContent = chip.label;
+    btn.onclick = () => selectChip(chip.converted);
     sel.appendChild(btn);
   });
-  chipValue = CFG.chips[0];
+  chipValue = chips[0].converted;
 }
 function rebuildChipLabels() {
-  const sym = getCurrency().symbol;
-  document.querySelectorAll('.chip-btn').forEach(b => { b.textContent = b.dataset.value + ' ' + sym; });
+  const cur = getCurrency();
+  const chips = BETS.chipsWithLabel(cur.code, cur.symbol);
+  document.querySelectorAll('.chip-btn').forEach((b, i) => {
+    if (chips[i]) {
+      b.dataset.value = chips[i].converted;
+      b.textContent = chips[i].label;
+    }
+  });
+  // Reset chipValue to first chip of new currency
+  chipValue = chips[0].converted;
+  selectChip(chips[0].converted);
 }
 function selectChip(val) {
   chipValue = val;
