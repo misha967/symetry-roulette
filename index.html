@@ -564,56 +564,82 @@ function drawBall(bAngle, bRadius) {
 // ═══════════════════════════════════════════════════════
 // SPIN ANIMATION
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// SPIN ANIMATION — physics-based, no teleport
+// ═══════════════════════════════════════════════════════
+
+// wheelAngle is the current rotation of the wheel in radians
+// slice = 2π/37, slot i is at angle: wheelAngle - π/2 + i*slice
+// The indicator is at 12 o'clock (angle = -π/2 from center)
+// Winning number = WHEEL_ORDER[slotAtIndicator]
+
+function angleToSlot(angle) {
+  const slice = (Math.PI * 2) / 37;
+  // Normalize angle so indicator (top = -PI/2) maps to slot index
+  let a = ((-angle - Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+  const idx = Math.floor(a / slice) % 37;
+  return RM.WHEEL_ORDER[idx];
+}
+
 function spinWheel(winNumber, onDone) {
-  const totalDuration = 5000;
-  const start = performance.now();
   const slice = (Math.PI * 2) / 37;
 
-  // Winning slot index in WHEEL_ORDER
+  // Target: wheel angle where winNumber is at the indicator
   const winIdx = RM.WHEEL_ORDER.indexOf(winNumber);
+  // Slot center angle (absolute): -(-winIdx*slice - slice/2) = winIdx*slice + slice/2
+  // We want: -(wheelFinal - PI/2) mod 2PI = winIdx*slice + slice/2
+  // => wheelFinal = -(winIdx*slice + slice/2) - PI/2 + 2PI*k
 
-  // We want winning number to stop at 12 o'clock (indicator position = -PI/2 + angle)
-  // Slot midpoint at top: angle - PI/2 + winIdx*slice + slice/2 = -PI/2
-  // => angle = -winIdx*slice - slice/2
-  const targetWheelAngle = -winIdx * slice - slice / 2;
+  const targetBase = -(winIdx * slice + slice / 2) - Math.PI / 2;
+  // Add enough full rotations (5-8) so spin is long
+  const extraTurns = Math.PI * 2 * (5 + Math.floor(Math.random() * 4));
+  const finalWheelAngle = targetBase - extraTurns;
 
-  // Add full rotations so it spins visibly
-  const extraTurns = (Math.PI * 2) * (5 + Math.floor(Math.random() * 3));
-  const finalWheelAngle = targetWheelAngle - extraTurns;
+  // Physics: start fast, decelerate to stop
+  const totalAngle = finalWheelAngle - wheelAngle; // negative = clockwise
+  const duration   = 5000 + Math.random() * 1000;  // 5-6s
+  const start      = performance.now();
+  const startAngle = wheelAngle;
 
-  // Ball starts at outer track (r * 0.93), counter-clockwise
-  const ballStartRadius = wheelR * 0.93;
-  const ballEndRadius   = wheelR * 0.66;
-  const ballStartAngle  = Math.random() * Math.PI * 2;
-  const ballTotalSpin   = -(Math.PI * 2) * (12 + Math.random() * 4); // counter-clockwise
+  // Ball physics
+  const ballStartR   = wheelR * 0.93;
+  const ballEndR     = wheelR * 0.66;
+  const ballStartA   = Math.random() * Math.PI * 2;
+  // Ball counter-rotates, stops earlier than wheel
+  const ballTurns    = Math.PI * 2 * (10 + Math.random() * 5);
+  const ballDuration = duration * 0.75; // ball stops at 75% of spin time
 
-  // Ball final angle = top of wheel = -PI/2 (12 o'clock) + small offset within slot
-  const ballFinalAngle = ballStartAngle + ballTotalSpin;
+  // Ease: smooth deceleration (ease-out cubic for wheel, faster ease-out for ball)
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function easeOutQuad(t)  { return 1 - Math.pow(1 - t, 2); }
 
-  function easeOut(t, p) { return 1 - Math.pow(1 - t, p); }
+  let lastT = 0;
 
   function frame(now) {
-    const elapsed = Math.min(now - start, totalDuration);
-    const t = elapsed / totalDuration;
+    const elapsed  = now - start;
+    const t        = Math.min(elapsed / duration, 1);
+    const tWheel   = easeOutCubic(t);
+    const tBall    = easeOutQuad(Math.min(elapsed / ballDuration, 1));
 
-    const tW = easeOut(t, 4);       // wheel: smooth quartic
-    const tB = easeOut(Math.min(t * 1.3, 1), 2.5); // ball stops earlier
+    const curWheelA = startAngle + totalAngle * tWheel;
+    const curBallA  = ballStartA - ballTurns * tBall;
+    const curBallR  = ballStartR - (ballStartR - ballEndR) * tBall;
 
-    const curWheel  = wheelAngle + (finalWheelAngle - wheelAngle) * tW;
-    const curBallA  = ballStartAngle + (ballFinalAngle - ballStartAngle) * tB;
-    const curBallR  = ballStartRadius - (ballStartRadius - ballEndRadius) * tB;
-
-    drawWheel(curWheel, t >= 1 ? winNumber : null);
+    drawWheel(curWheelA, null); // never highlight during spin
     drawBall(curBallA, curBallR);
 
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
+      // Snap to exact final angle
       wheelAngle = finalWheelAngle;
-      // Draw ball exactly at winning slot midpoint angle (relative to wheel + indicator)
-      const winSlotAngle = finalWheelAngle - Math.PI / 2 + winIdx * slice + slice / 2;
+
+      // Ball lands in the winning slot's visual center
+      const winSlotCenterA = finalWheelAngle - Math.PI / 2 + winIdx * slice + slice / 2;
+
       drawWheel(finalWheelAngle, winNumber);
-      drawBall(winSlotAngle, ballEndRadius);
+      drawBall(winSlotCenterA, ballEndR);
+
       playWinSound();
       setTimeout(onDone, 700);
     }
