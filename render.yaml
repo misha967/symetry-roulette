@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: symetry-roulette
+    env: static
+    buildCommand: ""
+    staticPublishPath: .
